@@ -1,4 +1,4 @@
-# 🌦️ Station Météo Embarquée - Projet Maritime (AIVM)
+# 🌦️ Station Météo Embarquée - Projet Système embarqué (WWW)
 
 Ce projet consiste en la conception et le développement du logiciel embarqué pour une station météo maritime autonome. Commanditée par l'Agence Internationale pour la Vigilance Météorologique (AIVM), cette station collecte des données environnementales pour aider à la prévention des catastrophes naturelles.
 
