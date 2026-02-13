@@ -40,11 +40,4 @@ Le code est structuré de manière modulaire pour séparer la logique métier de
 
 ---
 
-## 💻 Simulation Interface
 
-### Mode Configuration (Série)
-```bash
-> LOG_INTERVALL=10
-OK. Intervalle mis à 10 minutes.
-> VERSION
-v1.0 - Lot #24A01
