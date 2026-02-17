@@ -2,13 +2,13 @@
 
 > **Prototype de système embarqué pour l'acquisition de données environnementales en milieu maritime.**
 
-Ce projet, réalisé dans le cadre du cursus ingénieur (CESI), répond à la demande de l'Agence Internationale pour la Vigilance Météorologique (AIVM). [cite_start]L'objectif est de fournir une solution robuste, modulaire et économe en énergie pour collecter des données (Température, Pression, Humidité, Luminosité, GPS) afin de prévenir les risques naturels [cite: 121-122].
+Ce projet, réalisé dans le cadre du cursus ingénieur (CESI), répond à la demande de l'Agence Internationale pour la Vigilance Météorologique (AIVM). L'objectif est de fournir une solution robuste, modulaire et économe en énergie pour collecter des données (Température, Pression, Humidité, Luminosité, GPS) afin de prévenir les risques naturels.
 
 ---
 
 ## 🏗️ Architecture Logicielle
 
-[cite_start]Le projet repose sur une architecture en **C** modulaire, utilisant une **Machine à États Finis** (FSM) pour orchestrer les différents modes de fonctionnement[cite: 4]. Cette approche garantit la stabilité du système et facilite la maintenance.
+Le projet repose sur une architecture en **C** modulaire, utilisant une **Machine à États Finis** (FSM) pour orchestrer les différents modes de fonctionnement. Cette approche garantit la stabilité du système et facilite la maintenance.
 
 ### Structure du Projet
 Le code est organisé pour séparer clairement la logique métier (Modes) de la gestion matérielle (Drivers).
@@ -40,14 +40,14 @@ Le code est organisé pour séparer clairement la logique métier (Modes) de la 
 
 ## ⚙️ Modes de Fonctionnement
 
-[cite_start]Le système intègre 4 modes distincts, accessibles via interactions physiques (Boutons) et identifiables via la LED d'état [cite: 4-14].
+Le système intègre 4 modes distincts, accessibles via interactions physiques (Boutons) et identifiables via la LED d'état.
 
 | Mode | LED d'État | Description | Condition d'accès |
 | :--- | :--- | :--- | :--- |
 | **Standard** | 🟢 Verte | **Mode nominal.** Acquisition des données toutes les 10 min (défaut) et enregistrement sur carte SD. | Démarrage normal (aucun bouton pressé). |
-| **Configuration** | 🟡 Jaune | **Mode paramétrage.** Modification des seuils via le port Série (USB). [cite_start]Timeout inactivité : 30 min [cite: 7-8]. | Maintenir le **Bouton Rouge** appuyé lors du démarrage. |
+| **Configuration** | 🟡 Jaune | **Mode paramétrage.** Modification des seuils via le port Série (USB). Timeout inactivité : 30 min. | Maintenir le **Bouton Rouge** appuyé lors du démarrage. |
 | **Économique** | 🔵 Bleue | **Mode éco.** Intervalle d'acquisition doublé. GPS activé 1 cycle sur 2 pour économiser la batterie. | Appui **5s** sur **Bouton Vert** (depuis Standard). |
-| **Maintenance** | 🟠 Orange | **Mode technique.** Lecture des capteurs en direct sur le port série. [cite_start]Arrêt de l'écriture SD pour retrait sécurisé [cite: 9, 62-63]. | Appui **5s** sur **Bouton Rouge** (depuis Standard ou Éco). |
+| **Maintenance** | 🟠 Orange | **Mode technique.** Lecture des capteurs en direct sur le port série. Arrêt de l'écriture SD pour retrait sécurisé . | Appui **5s** sur **Bouton Rouge** (depuis Standard ou Éco). |
 
 ---
 
@@ -56,7 +56,7 @@ Le code est organisé pour séparer clairement la logique métier (Modes) de la 
 Le système communique via l'UART (Vitesse : 9600 bauds) pour les modes Configuration et Maintenance.
 
 ### 1. Interface Mode Configuration
-Les paramètres sont stockés en mémoire non volatile (EEPROM). [cite_start]Voici les commandes disponibles [cite: 43-60] :
+Les paramètres sont stockés en mémoire non volatile (EEPROM). Voici les commandes disponibles :
 
 | Commande | Description | Exemple |
 | :--- | :--- | :--- |
@@ -82,7 +82,7 @@ Ce mode affiche les données brutes en temps réel pour vérifier le bon fonctio
 
 ## 🚨 Codes d'Erreurs et Diagnostic LED
 
-[cite_start]Le système utilise la LED bicolore pour signaler les anomalies matérielles via des séquences de clignotement spécifiques [cite: 16, 20-24].
+Le système utilise la LED bicolore pour signaler les anomalies matérielles via des séquences de clignotement spécifiques.
 
 | Séquence (Couleur & Fréquence) | Signification de l'erreur | Action requise |
 | :--- | :--- | :--- |
@@ -96,7 +96,7 @@ Ce mode affiche les données brutes en temps réel pour vérifier le bon fonctio
 
 ## 📂 Gestion des Fichiers (Logs)
 
-[cite_start]Les données sont stockées au format CSV dans des fichiers journaliers [cite: 37-40].
+Les données sont stockées au format CSV dans des fichiers journaliers.
 
 * **Format du nom :** `AAMMJJ_R.LOG` (Année, Mois, Jour, Révision).
     * Exemple : `200531_0.LOG`
@@ -105,7 +105,7 @@ Ce mode affiche les données brutes en temps réel pour vérifier le bon fonctio
 ---
 
 ### Auteurs
-[cite_start]**Groupe A2 - CPI A2 S3E** [cite: 110-111]
+**Groupe A2 - CPI A2 S3E**
 * WHARTON Néïssa
 * LUGAND Pierre
 * SALHI Ilès
