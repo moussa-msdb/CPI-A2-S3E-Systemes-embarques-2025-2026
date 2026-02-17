@@ -1,4 +1,4 @@
-# 🌦️ Station Météo Maritime Embarquée (Projet AIVM)
+# 🌦️ Station Worldwide Weather Watcher (Projet WWW)
 
 > **Prototype de système embarqué pour l'acquisition de données environnementales en milieu maritime.**
 
