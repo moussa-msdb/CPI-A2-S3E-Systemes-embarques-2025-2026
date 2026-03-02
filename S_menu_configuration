@@ -1,0 +1,6 @@
+FONCTION action_menu_configuration()
+    SI Message_Serie_Recu() ALORS
+        Interpreter_Et_Modifier_Parametres(Message)
+        Sauvegarder_EEPROM()
+    FIN SI
+FIN FONCTION
