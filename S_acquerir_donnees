@@ -5,32 +5,3 @@ FONCTION action_acquerir_donnees()
     // Si un capteur ne répond pas (Timeout 30s), lever un drapeau d'erreur
     RETOURNER donnees
 FIN FONCTION
-
-FONCTION action_acquerir_gps(activer_lecture)
-    SI activer_lecture == VRAI ALORS
-        RETOURNER Lire_Trame_NMEA()
-    SINON
-        RETOURNER GPS_VIDE
-    FIN SI
-FIN FONCTION
-
-FONCTION action_sauvegarder_sd(donnees, gps)
-    Fichier = Ouvrir_Fichier("AAMMJJ_R.LOG")
-    SI Taille(Fichier) > Taille_Max ALORS
-        Fichier = Creer_Nouvelle_Revision()
-    FIN SI
-    Ecrire_CSV(Fichier, donnees, gps)
-    Fermer_Fichier()
-    // Si erreur SD, lever un drapeau d'erreur
-FIN FONCTION
-
-FONCTION action_menu_configuration()
-    SI Message_Serie_Recu() ALORS
-        Interpreter_Et_Modifier_Parametres(Message)
-        Sauvegarder_EEPROM()
-    FIN SI
-FIN FONCTION
-
-FONCTION action_afficher_maintenance(donnees, gps)
-    Afficher_Serie("Temp:", donnees.temp, "GPS:", gps.lat, gps.lon)
-FIN FONCTION
