@@ -1,0 +1,7 @@
+FONCTION action_acquerir_donnees()
+    donnees.temp = Lire_BME280_Temp()
+    donnees.press = Lire_BME280_Press()
+    donnees.lum = Lire_Capteur_Luminosite()
+    // Si un capteur ne répond pas (Timeout 30s), lever un drapeau d'erreur
+    RETOURNER donnees
+FIN FONCTION

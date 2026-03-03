@@ -1,0 +1,54 @@
+FONCTION Loop()
+    // 1. ÉVALUER LES TRANSITIONS EN PREMIER
+    changement_de_mode()
+
+    // 2. EXÉCUTER LES ACTIONS SELON LE MODE
+    SELON Mode_Actuel FAIRE
+
+        CAS STANDARD:
+            Fixer_Couleur_LED(VERTE)
+            
+            // On ne déclenche l'action que si le timer (ex: 10 min) est écoulé
+            SI Timer_Ecoule(Intervalle_Standard) ALORS
+                mes_donnees = action_acquerir_donnees()
+                mon_gps = action_acquerir_gps(VRAI)
+                action_sauvegarder_sd(mes_donnees, mon_gps)
+                Reset_Timer()
+            FIN SI
+            
+        CAS ECONOMIQUE:
+            Fixer_Couleur_LED(BLEUE)
+            
+            // Timer doublé (ex: 20 min)
+            SI Timer_Ecoule(Intervalle_Standard * 2) ALORS
+                mes_donnees = action_acquerir_donnees()
+                
+                // Le GPS est lu 1 fois sur 2
+                mon_gps = action_acquerir_gps(Cycle_GPS_Pair) 
+                Inverse_Cycle_GPS()
+                
+                action_sauvegarder_sd(mes_donnees, mon_gps)
+                Reset_Timer()
+            FIN SI
+
+        CAS CONFIGURATION:
+            Fixer_Couleur_LED(JAUNE)
+            action_menu_configuration()
+
+        CAS MAINTENANCE:
+            Fixer_Couleur_LED(ORANGE)
+            
+            // Affichage fluide toutes les secondes (pas d'enregistrement SD)
+            SI Timer_Ecoule(1_SECONDE) ALORS
+                mes_donnees = action_acquerir_donnees()
+                mon_gps = action_acquerir_gps(VRAI)
+                action_afficher_maintenance(mes_donnees, mon_gps)
+                Reset_Timer()
+            FIN SI
+
+    FIN SELON
+
+    // 3. TÂCHES DE FOND (Exécutées peu importe le mode)
+    Mettre_A_Jour_Clignotement_Erreurs_LED()
+
+FIN FONCTION
