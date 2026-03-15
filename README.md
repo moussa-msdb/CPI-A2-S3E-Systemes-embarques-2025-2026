@@ -14,26 +14,31 @@ Le projet repose sur une architecture en **C** modulaire, utilisant une **Machin
 Le code est organisé pour séparer clairement la logique métier (Modes) de la gestion matérielle (Drivers).
 
 ```text
-/Projet_Meteo
-├── src/
-│   ├── main.c                 # Point d'entrée : Initialisation et Boucle principale (Switch Case)
-│   ├── config.h               # Configuration matérielle (Pins) et constantes (Timeouts)
-│   ├── structures.h           # Définitions des structures de données (Logs, Settings, Enums)
-│   │
-│   ├── drivers/               # COUCHE HAL (Hardware Abstraction Layer)
-│   │   ├── led.c / .h         # Gestion asynchrone des LEDs (États et erreurs)
-│   │   ├── buttons.c / .h     # Gestion des appuis longs (5s) et courts
-│   │   ├── sensors.c / .h     # Driver unifié pour capteurs (BME280 + Lux)
-│   │   ├── gps.c / .h         # Driver UART pour module GPS (NMEA)
-│   │   ├── rtc.c / .h         # Driver Horloge Temps Réel (DS3231)
-│   │   └── sd_logger.c / .h   # Gestion du système de fichiers FAT (Logs et Révisions)
-│   │
-│   └── modes/                 # COUCHE MÉTIER (Logique des Diagrammes d'Activité)
-│       ├── mode_standard.c    # Acquisition périodique & Enregistrement
-│       ├── mode_config.c      # Interface Série pour paramétrage
-│       ├── mode_eco.c         # Mode économie d'énergie (Intervalle x2)
-│       └── mode_maint.c       # Mode maintenance (Lecture directe sans SD)
-└── README.md
+/Projet_Meteo.ino (Fichier Unique)
+├── En-tête & Déclarations                
+│   ├── Inclusions                        # Bibliothèques externes (DHT, SD, RTClib, MicroNMEA...)
+│   ├── 1. Config. Matérielle             # Définitions des broches (PIN_CLK, PIN_DHT, etc.)
+│   └── 2. États & Variables              # Structures de données (Enums Modes/LEDs) et variables globales
+│
+├── Couche HAL (Hardware Abstraction Layer) 
+│   ├── 3. Interruptions (ISR)            # isr_red(), isr_green() : Détection asynchrone des boutons
+│   ├── 4. Driver LEDs                    # led_update() : Traduction des états/erreurs en couleurs
+│   ├── 5. Système de Fichiers (SD)       # log_data_to_sd(), archiveFileIfNeeded() : Gestion FAT et révisions
+│   ├── 6. Driver Capteurs unifié         # check_sensors() : Acquisition DHT11, Lux, RTC, GPS et gestion erreurs
+│   └── 7. Logique Boutons                # read_buttons() : Traitement temporel (appuis longs, doubles clics)
+│
+├── Couche MÉTIER (Logique des Diagrammes d'Activité)
+│   └── 8. Logique des Modes & Commandes
+│       ├── process_command()             # Parseur UART pour modifier les paramètres EEPROM
+│       ├── mode_standard_run()           # Mode par défaut : Acquisition périodique
+│       ├── mode_config_run()             # Mode Configuration : Interface série et timeout (30 min)
+│       ├── mode_eco_run()                # Mode Économique : Intervalle d'acquisition doublé
+│       └── mode_maintenance_run()        # Mode Maintenance : Arrêt SD et affichage LCD en temps réel
+│
+└── Point d'Entrée (Superviseur)
+    └── 9. Setup & Loop
+        ├── setup()                       # Initialisation (Serial, Pins, Interruption, LCD, RTC, SD)
+        └── loop()                        # Machine à états principale (Switch Case sur currentMode)
 ```
 
 ---
@@ -45,15 +50,15 @@ Le système intègre 4 modes distincts, accessibles via interactions physiques (
 | Mode | LED d'État | Description | Condition d'accès |
 | :--- | :--- | :--- | :--- |
 | **Standard** | 🟢 Verte | **Mode nominal.** Acquisition des données toutes les 10 min (défaut) et enregistrement sur carte SD. | Démarrage normal (aucun bouton pressé). |
-| **Configuration** | 🟡 Jaune | **Mode paramétrage.** Modification des seuils via le port Série (USB). Timeout inactivité : 30 min. | Maintenir le **Bouton Rouge** appuyé lors du démarrage. |
+| **Configuration** | 🟡 Jaune | **Mode paramétrage.** Modification des seuils via le terminal. Timeout inactivité : 30 min ou **double clic Bouton Rouge** retour en mode standard| Double clic **Bouton Rouge** (depuis Standard). |
 | **Économique** | 🔵 Bleue | **Mode éco.** Intervalle d'acquisition doublé. GPS activé 1 cycle sur 2 pour économiser la batterie. | Appui **5s** sur **Bouton Vert** (depuis Standard). |
-| **Maintenance** | 🟠 Orange | **Mode technique.** Lecture des capteurs en direct sur le port série. Arrêt de l'écriture SD pour retrait sécurisé . | Appui **5s** sur **Bouton Rouge** (depuis Standard ou Éco). |
+| **Maintenance** | 🟠 Orange | **Mode technique.** Lecture des données en direct sur le port série. Arrêt de l'écriture SD pour retrait sécurisé . | Appui **5s** sur **Bouton Rouge** (depuis Standard ou Éco). |
 
 ---
 
 ## 💻 Interfaces Utilisateur (Port Série)
 
-Le système communique via l'UART (Vitesse : 9600 bauds) pour les modes Configuration et Maintenance.
+Le système communique via l'UART (Vitesse : 9600 bauds) pour le mode maintenance.
 
 ### 1. Interface Mode Configuration
 Les paramètres sont stockés en mémoire non volatile (EEPROM). Voici les commandes disponibles :
