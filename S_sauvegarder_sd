@@ -1,9 +1,0 @@
-FONCTION action_sauvegarder_sd(donnees, gps)
-    Fichier = Ouvrir_Fichier("AAMMJJ_R.LOG")
-    SI Taille(Fichier) > Taille_Max ALORS
-        Fichier = Creer_Nouvelle_Revision()
-    FIN SI
-    Ecrire_CSV(Fichier, donnees, gps)
-    Fermer_Fichier()
-    // Si erreur SD, lever un drapeau d'erreur
-FIN FONCTION
