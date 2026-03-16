@@ -1,3 +1,0 @@
-FONCTION action_afficher_maintenance(donnees, gps)
-    Afficher_Serie("Temp:", donnees.temp, "GPS:", gps.lat, gps.lon)
-FIN FONCTION

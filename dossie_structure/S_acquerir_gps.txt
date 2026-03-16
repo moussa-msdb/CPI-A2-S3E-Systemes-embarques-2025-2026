@@ -1,7 +1,0 @@
-FONCTION action_acquerir_gps(activer_lecture)
-    SI activer_lecture == VRAI ALORS
-        RETOURNER Lire_Trame_NMEA()
-    SINON
-        RETOURNER GPS_VIDE
-    FIN SI
-FIN FONCTION
