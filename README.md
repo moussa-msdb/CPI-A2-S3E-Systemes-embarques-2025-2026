@@ -14,20 +14,20 @@ Le projet repose sur une architecture en **C** modulaire, utilisant une **Machin
 Le code est organisé pour séparer clairement la logique métier (Modes) de la gestion matérielle (Drivers).
 
 ```text
-/Projet_Meteo.ino (Fichier Unique)
+/Projet_Meteo.ino
 ├── En-tête & Déclarations                
 │   ├── Inclusions                        # Bibliothèques externes (DHT, SD, RTClib, MicroNMEA...)
 │   ├── 1. Config. Matérielle             # Définitions des broches (PIN_CLK, PIN_DHT, etc.)
 │   └── 2. États & Variables              # Structures de données (Enums Modes/LEDs) et variables globales
 │
-├── Couche HAL (Hardware Abstraction Layer) 
+├── Couche HAL
 │   ├── 3. Interruptions (ISR)            # isr_red(), isr_green() : Détection asynchrone des boutons
 │   ├── 4. Driver LEDs                    # led_update() : Traduction des états/erreurs en couleurs
 │   ├── 5. Système de Fichiers (SD)       # log_data_to_sd(), archiveFileIfNeeded() : Gestion FAT et révisions
 │   ├── 6. Driver Capteurs unifié         # check_sensors() : Acquisition DHT11, Lux, RTC, GPS et gestion erreurs
 │   └── 7. Logique Boutons                # read_buttons() : Traitement temporel (appuis longs, doubles clics)
 │
-├── Couche MÉTIER (Logique des Diagrammes d'Activité)
+├── Couche MÉTIER 
 │   └── 8. Logique des Modes & Commandes
 │       ├── process_command()             # Parseur UART pour modifier les paramètres EEPROM
 │       ├── mode_standard_run()           # Mode par défaut : Acquisition périodique
@@ -35,7 +35,7 @@ Le code est organisé pour séparer clairement la logique métier (Modes) de la 
 │       ├── mode_eco_run()                # Mode Économique : Intervalle d'acquisition doublé
 │       └── mode_maintenance_run()        # Mode Maintenance : Arrêt SD et affichage LCD en temps réel
 │
-└── Point d'Entrée (Superviseur)
+└── Point d'Entrée 
     └── 9. Setup & Loop
         ├── setup()                       # Initialisation (Serial, Pins, Interruption, LCD, RTC, SD)
         └── loop()                        # Machine à états principale (Switch Case sur currentMode)
