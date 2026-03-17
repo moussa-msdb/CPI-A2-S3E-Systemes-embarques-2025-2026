@@ -107,6 +107,52 @@ Les données sont stockées au format CSV dans des fichiers journaliers.
     * Exemple : `200531_0.LOG`
 * **Rotation :** Le système écrit toujours dans la révision courante. Si la taille dépasse `FILE_MAX_SIZE` (défaut 2ko ou 4ko), une nouvelle révision est créée (`_0.LOG` -> `_1.LOG`).
 
+# Mode d'emploi de la station météo embarquée
+
+## Présentation
+La station météo embarquée permet de mesurer plusieurs paramètres environnementaux (température, hygrométrie, luminosité, GPS). Les données sont enregistrées automatiquement sur une carte SD afin de pouvoir être analysées ultérieurement. Le système fonctionne avec deux boutons poussoirs et une LED RGB permettant d'indiquer l'état du système.
+
+---
+
+## Modes de fonctionnement
+Il existe 4 modes de fonctionnement pour la station météo:
+
+* **Mode standard :** Prise de données toutes les 10 minutes et enregistrement sur la carte SD des données relevées. Tous les capteurs sont actifs.
+* **Mode économique :** La durée de prise de données et d'enregistrement est divisée par 2 pour une consommation réduite.
+* **Mode maintenance :** Ce mode permet d'agir sur la carte SD. Dans ce mode le système n'enregistre plus sur la carte SD pour permettre de la retirer ou de la changer. Les données relevées en direct sont affichées sur l'écran afin de vérifier le bon fonctionnement des capteurs.
+* **Mode configuration :** Ce mode permet de modifier les différents paramètres du système comme les seuils des capteurs, la fréquence de prise de données et d'enregistrement.
+
+---
+
+## Contrôle et Navigation (Boutons)
+Le système comporte donc deux boutons poussoirs, un bouton rouge et un bouton vert. Ces boutons sont utiles pour changer de mode de fonctionnement. Au démarrage, le système est en mode standard.
+
+* **Passer en mode maintenance :** appuyer 5 secondes sur le bouton rouge. Pour revenir au mode précédent, appuyer à nouveau 5 secondes sur le bouton rouge.
+* **Passer en mode éco :** appuyer 5 secondes sur le bouton vert, une fois en mode éco appuyer 5 secondes sur le bouton vert pour revenir au mode standard, ou appuyer 5 secondes sur le bouton rouge pour passer au mode maintenance.
+* **Passer en mode configuration :** Appuyer deux fois sur le bouton rouge, appuyer deux fois à nouveau pour revenir au mode standard.
+
+---
+
+## Indications Visuelles (LED RGB)
+La LED RGB permet de voir dans quel mode nous nous trouvons pendant l'utilisation et s'allume d'une couleur différente pour chaque mode. Elle permet également d'afficher les différentes erreurs qui peuvent survenir au sein de notre station météo.
+
+### États du système 
+| Mode Actif | Couleur de la LED |
+| :--- | :--- |
+| **Mode standard** | Verte |
+| **Mode économique** | Bleu |
+| **Mode configuration** | Jaune |
+| **Mode maintenance** | Orange |
+
+### Codes d'erreurs
+| Type d'erreur | Clignotement de la LED |
+| :--- | :--- |
+| **Erreur horloge RTC** | Bleu et rouge |
+| **Erreur GPS** | Rouge et jaune |
+| **Erreur capteur** (humidité, hygrométrie, luminosité, etc) | Rouge et vert |
+| **Données incohérentes relevées** | Rouge et vert (vert 2x plus long) |
+| **Carte SD pleine** | Rouge et blanc |
+| **Erreur d'écriture sur la carte SD** | Rouge et blanc (blanc 2x plus long) |
 ---
 
 ### Auteurs
