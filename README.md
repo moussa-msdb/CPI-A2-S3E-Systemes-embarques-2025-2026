@@ -121,7 +121,6 @@ Il existe 4 modes de fonctionnement pour la station météo:
 * **Mode maintenance :** Ce mode permet d'agir sur la carte SD. Dans ce mode le système n'enregistre plus sur la carte SD pour permettre de la retirer ou de la changer. Les données relevées en direct sont affichées sur l'écran afin de vérifier le bon fonctionnement des capteurs.
 * **Mode configuration :** Ce mode permet de modifier les différents paramètres du système comme les seuils des capteurs, la fréquence de prise de données et d'enregistrement.
 
----
 
 ## Contrôle et Navigation (Boutons)
 Le système comporte donc deux boutons poussoirs, un bouton rouge et un bouton vert. Ces boutons sont utiles pour changer de mode de fonctionnement. Au démarrage, le système est en mode standard.
@@ -130,7 +129,6 @@ Le système comporte donc deux boutons poussoirs, un bouton rouge et un bouton v
 * **Passer en mode éco :** appuyer 5 secondes sur le bouton vert, une fois en mode éco appuyer 5 secondes sur le bouton vert pour revenir au mode standard, ou appuyer 5 secondes sur le bouton rouge pour passer au mode maintenance.
 * **Passer en mode configuration :** Appuyer deux fois sur le bouton rouge, appuyer deux fois à nouveau pour revenir au mode standard.
 
----
 
 ## Indications Visuelles (LED RGB)
 La LED RGB permet de voir dans quel mode nous nous trouvons pendant l'utilisation et s'allume d'une couleur différente pour chaque mode. Elle permet également d'afficher les différentes erreurs qui peuvent survenir au sein de notre station météo.
