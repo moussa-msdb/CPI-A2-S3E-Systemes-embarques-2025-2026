@@ -4,7 +4,7 @@
 #include <rgb_lcd.h>
 #include <DHT.h>
 #include <SoftwareSerial.h>
-#include <MicroNMEA.h> // <--- NOUVELLE BIBLIOTHÈQUE GPS !
+#include <MicroNMEA.h> 
 #include <RTClib.h>
 #include <SPI.h>
 #include <SD.h>
@@ -28,7 +28,6 @@ rgb_lcd lcd;
 SoftwareSerial gpsSerial(PIN_GPS_RX, PIN_GPS_TX);
 RTC_DS1307 rtc; 
 
-// --- INITIALISATION MICRONMEA ---
 char nmeaBuffer[85];
 MicroNMEA nmea(nmeaBuffer, sizeof(nmeaBuffer));
 
@@ -61,11 +60,36 @@ float lastTemp = 0.0;
 float lastHum = 0.0;
 int lastLum = 0;
 
-char cmdBuffer[20]; 
+char cmdBuffer[22]; // Légèrement agrandi pour les commandes longues comme PRESSURE_MAX=
 uint8_t cmdIndex = 0;
 
-// --- NOTRE NOUVEAU COMPTEUR GPS ---
 uint32_t gpsCharsCount = 0; 
+
+// --- NOUVEAU : STRUCTURE DE CONFIGURATION DES CAPTEURS ---
+// Optimisé pour consommer un minimum absolu de RAM (12 octets au total)
+struct ConfigParams {
+    uint16_t lumin_low;
+    uint16_t lumin_high;
+    uint16_t pressure_min;
+    uint16_t pressure_max;
+    int8_t min_temp_air;
+    int8_t max_temp_air;
+    int8_t hygr_mint;
+    int8_t hygr_maxt;
+    uint8_t active_lumin : 1;
+    uint8_t active_temp_air : 1;
+    uint8_t active_hygr : 1;
+    uint8_t active_pressure : 1;
+};
+
+// Initialisation avec TES valeurs par défaut
+ConfigParams cfg = {
+    10, 768,       // Luminosité
+    850, 1080,      // Pression
+    -10, 90,        // Température
+    0, 90,          // Hygrométrie
+    1, 1, 1, 1      // Activations (1=ON, 0=OFF)
+};
 
 // ==========================================
 // 3. VARIABLES POUR LES INTERRUPTIONS
@@ -225,18 +249,27 @@ void log_data_to_sd() {
     dataFile.print(now.minute(), DEC); dataFile.print(F(":"));
     dataFile.print(now.second(), DEC); dataFile.print(F(","));
 
-    if (isnan(lastTemp) || isnan(lastHum)) {
+    if (isnan(lastTemp) || isnan(lastHum) || !cfg.active_temp_air || !cfg.active_hygr) {
         dataFile.print(F("NA,NA,"));
     } else {
         dataFile.print(lastTemp, 1); dataFile.print(F(","));
         dataFile.print(lastHum, 1); dataFile.print(F(","));
     }
 
-    dataFile.print(lastLum); dataFile.print(F(","));
+    if (cfg.active_lumin) {
+        dataFile.print(lastLum); dataFile.print(F(","));
+    } else {
+        dataFile.print(F("NA,"));
+    }
 
+    // LECTURE SÉCURISÉE DES COORDONNÉES MICRONMEA
     if (nmea.isValid()) {
-        dataFile.print(nmea.getLatitude() / 1000000.0, 6); dataFile.print(F(","));
-        dataFile.print(nmea.getLongitude() / 1000000.0, 6);
+        long latitude_mdeg = nmea.getLatitude();
+        long longitude_mdeg = nmea.getLongitude();
+        float lat_float = (float)latitude_mdeg / 1000000.0;
+        float lng_float = (float)longitude_mdeg / 1000000.0;
+        dataFile.print(lat_float, 6); dataFile.print(F(","));
+        dataFile.print(lng_float, 6);
     } else {
         dataFile.print(F("NA,NA"));
     }
@@ -267,13 +300,30 @@ void check_sensors() {
     if (millis() - lastSensorCheck > 2500) {
         lastTemp = dht.readTemperature();
         lastHum = dht.readHumidity();
-        lastLum = analogRead(PIN_LUM);
-
-        if (isnan(lastTemp) || isnan(lastHum)) { dhtErrorCount++; } else { dhtErrorCount = 0; }
-        bool lumBroken = (lastLum == 0 || lastLum >= 1023);
         
-        bool isIncoherent = (!isnan(lastHum) && (lastHum > 100.0 || lastHum < 0.0)) || 
-                            (!isnan(lastTemp) && (lastTemp > 80.0 || lastTemp < -40.0));
+        // On lit la lumière UNIQUEMENT si le capteur est activé
+        if (cfg.active_lumin) {
+            lastLum = analogRead(PIN_LUM);
+        }
+        // --- NOUVEAU : Application des règles de configuration ---
+        
+        // 1. Simulation de capteurs désactivés
+        if (!cfg.active_temp_air) lastTemp = NAN;
+        if (!cfg.active_hygr) lastHum = NAN;
+
+        if ((isnan(lastTemp) && cfg.active_temp_air) || (isnan(lastHum) && cfg.active_hygr)) { 
+            dhtErrorCount++; 
+        } else { 
+            dhtErrorCount = 0; 
+        }
+        
+        bool lumBroken = cfg.active_lumin && (lastLum == 0 || lastLum >= 1023);
+        
+        // 2. Utilisation des nouvelles limites dynamiques pour les incohérences
+        bool tempError = cfg.active_temp_air && !isnan(lastTemp) && (lastTemp > cfg.max_temp_air || lastTemp < cfg.min_temp_air);
+        bool hygrError = cfg.active_hygr && !isnan(lastHum) && (lastHum > cfg.hygr_maxt || lastHum < cfg.hygr_mint);
+        
+        bool isIncoherent = tempError || hygrError;
         
         if (dhtErrorCount >= 2 || lumBroken) {
             sensorIsBroken = true; sensorIsIncoherent = false;
@@ -292,7 +342,6 @@ void check_sensors() {
     
     if (currentMode == MODE_STANDARD || currentMode == MODE_ECO) {
         if (millis() > 10000 && millis() - lastGpsCheck > 5000) { 
-            // On compare avec notre compteur maison
             gpsIsBroken = (gpsCharsCount == lastCharsCount);
             lastCharsCount = gpsCharsCount;
             lastGpsCheck = millis();
@@ -360,17 +409,33 @@ void read_buttons() {
 void process_command(char* cmd) {
     for (uint8_t i = 0; cmd[i] != '\0'; i++) { cmd[i] = toupper(cmd[i]); }
 
+    // On utilise la mémoire Flash (PSTR) pour les 12 nouvelles commandes !
     if (strcmp_P(cmd, PSTR("VERSION")) == 0) { 
         Serial.println(F("MeteoStation V1.0")); 
     }
     else if (strncmp_P(cmd, PSTR("LOG_INTERVALL="), 14) == 0) { 
-        log_interval = atol(cmd + 14); 
-        Serial.println(F("OK")); 
+        log_interval = atol(cmd + 14); Serial.println(F("OK")); 
     }
     else if (strncmp_P(cmd, PSTR("FILE_MAX_SIZE="), 14) == 0) { 
-        file_max_size = atol(cmd + 14); 
-        Serial.println(F("OK")); 
+        file_max_size = atol(cmd + 14); Serial.println(F("OK")); 
     }
+    // --- LUMINOSITE ---
+    else if (strncmp_P(cmd, PSTR("LUMIN_LOW="), 10) == 0) { cfg.lumin_low = atoi(cmd + 10); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("LUMIN_HIGH="), 11) == 0) { cfg.lumin_high = atoi(cmd + 11); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("LUMIN="), 6) == 0) { cfg.active_lumin = atoi(cmd + 6); Serial.println(F("OK")); }
+    // --- TEMPERATURE ---
+    else if (strncmp_P(cmd, PSTR("MIN_TEMP_AIR="), 13) == 0) { cfg.min_temp_air = atoi(cmd + 13); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("MAX_TEMP_AIR="), 13) == 0) { cfg.max_temp_air = atoi(cmd + 13); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("TEMP_AIR="), 9) == 0) { cfg.active_temp_air = atoi(cmd + 9); Serial.println(F("OK")); }
+    // --- HYGROMETRIE ---
+    else if (strncmp_P(cmd, PSTR("HYGR_MINT="), 10) == 0) { cfg.hygr_mint = atoi(cmd + 10); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("HYGR_MAXT="), 10) == 0) { cfg.hygr_maxt = atoi(cmd + 10); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("HYGR="), 5) == 0) { cfg.active_hygr = atoi(cmd + 5); Serial.println(F("OK")); }
+    // --- PRESSION ---
+    else if (strncmp_P(cmd, PSTR("PRESSURE_MIN="), 13) == 0) { cfg.pressure_min = atoi(cmd + 13); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("PRESSURE_MAX="), 13) == 0) { cfg.pressure_max = atoi(cmd + 13); Serial.println(F("OK")); }
+    else if (strncmp_P(cmd, PSTR("PRESSURE="), 9) == 0) { cfg.active_pressure = atoi(cmd + 9); Serial.println(F("OK")); }
+    
     else if (strlen(cmd) > 0) { 
         Serial.println(F("Erreur")); 
     }
@@ -422,7 +487,8 @@ void mode_config_run() {
 
 void mode_eco_run() { 
     if (event_red_long_press) { previousMode = MODE_ECO; currentMode = MODE_MAINTENANCE;; lastLogTime = millis(); } 
-    if (event_green_long_press) { currentMode = MODE_STANDARD; lastLogTime = millis(); }
+    if (event_green_long_press) { currentMode = MODE_STANDARD; lastLogTime = millis(); } 
+    
     if (millis() - lastLogTime >= (log_interval * 2)) {
         log_data_to_sd();
         lastLogTime = millis();
@@ -471,7 +537,12 @@ void mode_maintenance_run() {
         if ((millis() / 2000) % 2 == 0) {
             lcd.print(F("T:")); lcd.print(lastTemp, 0); lcd.print(F("C H:")); lcd.print(lastHum, 0); lcd.print(F("%"));
         } else {
-            lcd.print(F("L:")); lcd.print(lastLum);
+            lcd.print(F("L:")); 
+            if (cfg.active_lumin) {
+                lcd.print(lastLum);
+            } else {
+                lcd.print(F("NA"));
+            }
             lcd.print(nmea.isValid() ? F(" GPS:OK") : F(" GPS:NO"));
         }
     }
@@ -506,11 +577,10 @@ void setup() {
 void loop() {
     read_buttons();
     
-    // --- NOTRE COMPTEUR EST ICI ---
     if (currentMode == MODE_STANDARD || currentMode == MODE_ECO) {
         while (gpsSerial.available() > 0) { 
             nmea.process(gpsSerial.read()); 
-            gpsCharsCount++; // À chaque caractère reçu, on incrémente !
+            gpsCharsCount++; 
         }
     }
     
