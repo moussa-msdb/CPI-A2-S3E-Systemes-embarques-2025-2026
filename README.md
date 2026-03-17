@@ -106,7 +106,7 @@ Les données sont stockées au format CSV dans des fichiers journaliers.
 * **Format du nom :** `AAMMJJ_R.LOG` (Année, Mois, Jour, Révision).
     * Exemple : `200531_0.LOG`
 * **Rotation :** Le système écrit toujours dans la révision courante. Si la taille dépasse `FILE_MAX_SIZE` (défaut 2ko ou 4ko), une nouvelle révision est créée (`_0.LOG` -> `_1.LOG`).
-
+---
 # Mode d'emploi de la station météo embarquée
 
 ## Présentation
