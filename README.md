@@ -112,7 +112,6 @@ Les données sont stockées au format CSV dans des fichiers journaliers.
 ## Présentation
 La station météo embarquée permet de mesurer plusieurs paramètres environnementaux (température, hygrométrie, luminosité, GPS). Les données sont enregistrées automatiquement sur une carte SD afin de pouvoir être analysées ultérieurement. Le système fonctionne avec deux boutons poussoirs et une LED RGB permettant d'indiquer l'état du système.
 
----
 
 ## Modes de fonctionnement
 Il existe 4 modes de fonctionnement pour la station météo:
